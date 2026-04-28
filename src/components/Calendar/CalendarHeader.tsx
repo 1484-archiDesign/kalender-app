@@ -15,61 +15,63 @@ export default function CalendarHeader() {
   if (view === 'week') {
     const start = cd.startOf('week');
     const end = cd.endOf('week');
-    if (start.month() === end.month()) {
-      label = start.format('MMMM YYYY');
-    } else {
-      label = `${start.format('MMM')} – ${end.format('MMM YYYY')}`;
-    }
+    label = start.month() === end.month()
+      ? start.format('MMMM YYYY')
+      : `${start.format('MMM')} — ${end.format('MMM YYYY')}`;
   } else {
     label = cd.format('MMMM YYYY');
   }
 
   return (
     <header className="cal-header">
-      {/* Left: logo + geo accent */}
+      {/* Brand */}
       <div className="cal-header__brand">
         <div className="cal-header__logo">
-          <span className="cal-header__logo-square cal-header__logo-square--r" />
-          <span className="cal-header__logo-square cal-header__logo-square--b" />
-          <span className="cal-header__logo-square cal-header__logo-square--y" />
+          <div className="cal-header__logo-row">
+            <span className="cal-header__logo-sq cal-header__logo-sq--r" />
+            <span className="cal-header__logo-sq cal-header__logo-sq--b" />
+          </div>
+          <div className="cal-header__logo-row">
+            <span className="cal-header__logo-sq cal-header__logo-sq--y" />
+            <span className="cal-header__logo-sq cal-header__logo-sq--g" />
+          </div>
         </div>
-        <span className="cal-header__title mono">KALENDER</span>
+        <span className="cal-header__title">KALENDER</span>
       </div>
 
-      {/* Center: nav */}
+      {/* Nav */}
       <div className="cal-header__nav">
-        <button className="btn btn--sm btn--icon" onClick={navigatePrev}>‹</button>
-        <button className="cal-header__today btn btn--sm" onClick={navigateToday}>TODAY</button>
-        <button className="btn btn--sm btn--icon" onClick={navigateNext}>›</button>
-        <span className="cal-header__label mono">{label.toUpperCase()}</span>
+        <button className="cal-header__arrow" onClick={navigatePrev}>‹</button>
+        <button className="cal-header__today" onClick={navigateToday}>TODAY</button>
+        <button className="cal-header__arrow" onClick={navigateNext}>›</button>
+        <span className="cal-header__label">{label.toUpperCase()}</span>
       </div>
 
-      {/* Right: view switcher + actions */}
+      {/* Right actions */}
       <div className="cal-header__actions">
         <div className="cal-header__view-toggle">
           <button
-            className={`cal-header__view-btn mono${view === 'week' ? ' active' : ''}`}
+            className={`cal-header__view-btn${view === 'week' ? ' active' : ''}`}
             onClick={() => setView('week')}
           >WEEK</button>
           <button
-            className={`cal-header__view-btn mono${view === 'month' ? ' active' : ''}`}
+            className={`cal-header__view-btn${view === 'month' ? ' active' : ''}`}
             onClick={() => setView('month')}
           >MONTH</button>
         </div>
 
         <button
-          className={`btn btn--sm${notionConfig ? ' btn--primary' : ''}`}
+          className={`cal-header__notion-btn${notionConfig ? ' linked' : ''}`}
           onClick={() => setNotionSettingsOpen(true)}
-          title="Notion連携設定"
         >
-          <span style={{ fontSize: 12 }}>N</span>
-          {notionConfig ? ' LINKED' : ' NOTION'}
+          <span className="cal-header__notion-n">N</span>
+          {notionConfig ? 'LINKED' : 'NOTION'}
         </button>
 
         <button
-          className="btn btn--sm btn--icon"
+          className="cal-header__settings-btn"
           onClick={() => setSettingsOpen(true)}
-          title="フィールド設定"
+          title="Field settings"
         >⚙</button>
       </div>
     </header>

@@ -4,26 +4,39 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  background: var(--cream);
 }
 
+/* Header row */
 .month-view__header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-bottom: var(--border);
+  border-bottom: var(--border-thick);
   flex-shrink: 0;
+  background: var(--black);
 }
 
 .month-view__header-cell {
-  padding: 8px;
+  padding: 10px;
   text-align: center;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--gray-3);
-  border-right: 1px solid var(--gray-2);
+  letter-spacing: 0.14em;
+  font-family: var(--font-mono);
+  border-right: 1px solid rgba(255,255,255,0.12);
 }
 .month-view__header-cell:last-child { border-right: none; }
 
+/* Color the day name headers */
+.month-view__header-cell:nth-child(1) { color: var(--red);    }
+.month-view__header-cell:nth-child(2) { color: var(--yellow); }
+.month-view__header-cell:nth-child(3) { color: rgba(255,255,255,0.7); }
+.month-view__header-cell:nth-child(4) { color: var(--green);  }
+.month-view__header-cell:nth-child(5) { color: rgba(255,255,255,0.7); }
+.month-view__header-cell:nth-child(6) { color: var(--yellow); }
+.month-view__header-cell:nth-child(7) { color: var(--blue);   }
+
+/* Grid */
 .month-view__grid {
   display: flex;
   flex-direction: column;
@@ -35,44 +48,62 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   flex: 1;
-  min-height: 100px;
-  border-bottom: 1px solid var(--gray-2);
+  min-height: 110px;
+  border-bottom: var(--border-thin);
 }
 .month-view__week:last-child { border-bottom: none; }
 
 .month-view__day {
-  border-right: 1px solid var(--gray-2);
-  padding: 4px;
+  border-right: var(--border-thin);
+  padding: 6px;
   cursor: pointer;
-  min-height: 100px;
-  transition: background 80ms;
+  min-height: 110px;
   overflow: hidden;
+  transition: background 60ms;
+  position: relative;
 }
 .month-view__day:last-child { border-right: none; }
 .month-view__day:hover { background: var(--gray-1); }
-.month-view__day.other-month { background: rgba(0,0,0,0.02); }
+
+.month-view__day.other-month {
+  background: rgba(0,0,0,0.02);
+}
 .month-view__day.other-month .month-view__day-num { color: var(--gray-2); }
-.month-view__day.today { background: rgba(27,77,142,0.04); }
+
+/* Today — yellow accent */
+.month-view__day.today {
+  background: rgba(245,196,0,0.08);
+}
+.month-view__day.today::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--yellow);
+}
 
 .month-view__day-num-wrap {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .month-view__day-num {
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 14px;
   color: var(--black);
   line-height: 1;
   padding: 2px 4px;
 }
 .month-view__day-num.today {
   background: var(--black);
-  color: var(--white);
-  padding: 3px 5px;
+  color: var(--yellow);
+  padding: 3px 6px;
 }
 
+/* Tasks */
 .month-view__tasks {
   display: flex;
   flex-direction: column;
@@ -81,34 +112,37 @@
 
 .month-view__task {
   font-size: 10px;
-  font-weight: 600;
-  padding: 2px 5px;
-  border-left: 3px solid var(--blue);
+  font-weight: 700;
+  padding: 3px 6px;
+  border-left: 4px solid var(--blue);
   background: var(--white);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
-  border-top: 1px solid var(--gray-2);
-  border-right: 1px solid var(--gray-2);
-  border-bottom: 1px solid var(--gray-2);
-  transition: box-shadow 80ms;
+  border-top: 1px solid var(--gray-1);
+  border-right: 1px solid var(--gray-1);
+  border-bottom: 1px solid var(--gray-1);
+  letter-spacing: 0.01em;
+  transition: box-shadow 60ms, transform 60ms;
 }
 .month-view__task:hover {
-  box-shadow: 1px 1px 0 var(--black);
+  box-shadow: 2px 2px 0 var(--black);
+  transform: translate(-1px, -1px);
 }
 
 .month-view__more {
   font-size: 9px;
   font-weight: 700;
   color: var(--gray-3);
-  letter-spacing: 0.06em;
-  padding: 1px 4px;
+  letter-spacing: 0.08em;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
 }
 
 /* Mobile */
-@media (max-width: 600px) {
-  .month-view__week { min-height: 70px; }
-  .month-view__day { min-height: 70px; padding: 2px; }
-  .month-view__task { font-size: 9px; }
+@media (max-width: 640px) {
+  .month-view__week { min-height: 72px; }
+  .month-view__day  { min-height: 72px; padding: 3px; }
+  .month-view__task { font-size: 9px; padding: 2px 4px; }
 }
