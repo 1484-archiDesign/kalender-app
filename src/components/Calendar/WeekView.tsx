@@ -250,8 +250,15 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
         ? (t as unknown as Record<string, string>)[field.id]
         : t.customFields?.[field.id];
       if (!val) continue;
-      const opt = field.options?.find(o => o.value === val);
-      if (opt) badges.push({ label: opt.label, color: opt.color ?? 'var(--gray-3)' });
+      // match by value, then by label (Notion tasks use raw Japanese labels)
+      const opt = field.options?.find(o => o.value === val)
+               ?? field.options?.find(o => o.label.toLowerCase() === val.toLowerCase());
+      if (opt) {
+        badges.push({ label: opt.label, color: opt.color ?? 'var(--gray-3)' });
+      } else {
+        // no matching option → show raw value as-is (e.g. Notion values)
+        badges.push({ label: val, color: 'var(--gray-3)' });
+      }
     }
     return badges;
   };
