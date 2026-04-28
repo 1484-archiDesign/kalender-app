@@ -28,7 +28,7 @@
 
   --header-h:   64px;
   --time-col-w: 60px;
-  --cell-h:     64px;
+  --cell-h:     80px;
 }
 
 *, *::before, *::after {

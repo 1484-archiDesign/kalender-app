@@ -96,7 +96,7 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
   }, []);
 
   /* ── helpers ── */
-  const snapMins = (raw: number) => Math.round(raw / 15) * 15;
+  const snapMins = (raw: number) => Math.round(raw / 5) * 5;
 
   const getMinutesFromY = useCallback((y: number, colH: number) =>
     snapMins(Math.max(0, Math.min(1425, Math.floor((y / colH) * 1440)))), []);
@@ -130,7 +130,7 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
     if (!drag || drag.type !== 'create' || drag.dayIndex !== dayIndex) return;
     const col  = e.currentTarget as HTMLElement;
     const mins = getMinutesFromY(e.clientY - col.getBoundingClientRect().top, col.clientHeight);
-    setDrag(d => d && d.type === 'create' ? { ...d, endMinutes: Math.max(mins, d.startMinutes + 15) } : d);
+    setDrag(d => d && d.type === 'create' ? { ...d, endMinutes: Math.max(mins, d.startMinutes + 5) } : d);
     setDragMoved(true);
   }, [drag, getMinutesFromY]);
 
