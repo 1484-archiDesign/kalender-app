@@ -138,6 +138,14 @@ function FieldRow({ field, isExpanded, onToggle, onDelete, onUpdateField }: Fiel
           {field.options?.slice(0, 4).map(o => (
             <span key={o.value} className="fs-row__dot" style={{ background: o.color ?? '#888' }} />
           ))}
+          {/* Calendar visibility toggle */}
+          <button
+            className={`fs-row__cal-toggle${field.showOnCalendar ? ' active' : ''}`}
+            onClick={() => onUpdateField({ showOnCalendar: !field.showOnCalendar })}
+            title={field.showOnCalendar ? 'カレンダーに表示中' : 'カレンダーに非表示'}
+          >
+            {field.showOnCalendar ? '◉' : '◎'}
+          </button>
           {!field.isDefault && (
             <button className="btn btn--red btn--sm" onClick={onDelete}>✕</button>
           )}

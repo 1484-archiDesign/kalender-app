@@ -12,6 +12,7 @@ export interface FieldDefinition {
   type: 'select' | 'text';
   options?: FieldOption[];
   isDefault?: boolean;
+  showOnCalendar?: boolean;
 }
 
 export interface Task {

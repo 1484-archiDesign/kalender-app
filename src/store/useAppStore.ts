@@ -9,6 +9,7 @@ const DEFAULT_FIELDS: FieldDefinition[] = [
     name: 'カテゴリ',
     type: 'select',
     isDefault: true,
+    showOnCalendar: true,
     options: [
       { value: 'work',     label: 'Work',     color: '#1B4D8E' },
       { value: 'personal', label: 'Personal', color: '#D62B2B' },
@@ -20,6 +21,7 @@ const DEFAULT_FIELDS: FieldDefinition[] = [
     name: '進捗',
     type: 'select',
     isDefault: true,
+    showOnCalendar: true,
     options: [
       { value: 'todo',       label: 'TODO',        color: '#8A8378' },
       { value: 'inprogress', label: 'IN PROGRESS', color: '#1B4D8E' },
@@ -31,6 +33,7 @@ const DEFAULT_FIELDS: FieldDefinition[] = [
     name: '優先度',
     type: 'select',
     isDefault: true,
+    showOnCalendar: true,
     options: [
       { value: 'high',   label: 'HIGH',   color: '#D62B2B' },
       { value: 'medium', label: 'MEDIUM', color: '#F5C400' },

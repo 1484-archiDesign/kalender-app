@@ -70,6 +70,20 @@
   flex-shrink: 0;
 }
 
+.fs-row__cal-toggle {
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+  color: var(--gray-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 60ms;
+  flex-shrink: 0;
+}
+.fs-row__cal-toggle:hover { color: var(--gray-3); }
+.fs-row__cal-toggle.active { color: var(--blue); }
+
 /* Body */
 .fs-row__body {
   padding: 16px;

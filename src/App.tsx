@@ -48,6 +48,14 @@ export default function App() {
     if (isSupabaseEnabled) await sbDeleteTask(id);
   }, [store, sbDeleteTask]);
 
+  const handleMoveTask = useCallback(async (id: string, startTime: string, endTime: string) => {
+    store.updateTask(id, { startTime, endTime });
+    if (isSupabaseEnabled) {
+      const task = store.tasks.find(t => t.id === id);
+      if (task) await sbUpsertTask({ ...task, startTime, endTime });
+    }
+  }, [store, sbUpsertTask]);
+
   const handleSaveFields = useCallback(async () => {
     if (isSupabaseEnabled) await sbSaveSettings('fields', store.fields);
   }, [store, sbSaveSettings]);
@@ -71,7 +79,7 @@ export default function App() {
 
       <main className="app__main">
         {view === 'week' ? (
-          <WeekView onCreateTask={handleCreateTask} onEditTask={handleEditTask} />
+          <WeekView onCreateTask={handleCreateTask} onEditTask={handleEditTask} onMoveTask={handleMoveTask} />
         ) : (
           <MonthView onCreateTask={handleCreateTask} onEditTask={handleEditTask} />
         )}
