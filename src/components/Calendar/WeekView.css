@@ -15,13 +15,7 @@
   grid-template-columns: var(--time-col-w) repeat(7, 1fr);
   border-bottom: var(--border-thick);
   flex-shrink: 0;
-  /* match body scrollbar gutter — scroll but invisible */
-  overflow-y: scroll;
-  scrollbar-color: transparent transparent; /* Firefox: takes space, invisible */
-}
-.week-view__day-headers::-webkit-scrollbar-track,
-.week-view__day-headers::-webkit-scrollbar-thumb {
-  background: transparent; /* Chrome: takes space, invisible */
+  /* paddingRight is set via JS to match body scrollbar width */
 }
 
 .week-view__time-gutter {

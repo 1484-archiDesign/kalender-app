@@ -77,19 +77,21 @@ interface Props {
 export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props) {
   const { tasks, currentDate, fields } = useAppStore();
   const gridRef   = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag]         = useState<DragState>(null);
   const [dragMoved, setDragMoved] = useState(false);
 
   const weekStart = dayjs(currentDate).startOf('week');
   const today     = dayjs();
 
-  /* ── scroll to 6:00 on mount ── */
+  /* ── scroll to 6:00 on mount + sync header padding to body scrollbar width ── */
   useEffect(() => {
     const el = gridRef.current;
+    const hd = headerRef.current;
     if (!el) return;
-    // wait one frame for layout
     requestAnimationFrame(() => {
       el.scrollTop = (6 / 24) * el.scrollHeight;
+      if (hd) hd.style.paddingRight = `${el.offsetWidth - el.clientWidth}px`;
     });
   }, []);
 
@@ -278,7 +280,7 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
   return (
     <div className="week-view">
       {/* ── Day headers ── */}
-      <div className="week-view__day-headers">
+      <div className="week-view__day-headers" ref={headerRef}>
         <div className="week-view__time-gutter" />
         {DAYS.map((d, i) => {
           const day     = weekStart.add(i, 'day');
