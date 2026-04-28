@@ -239,8 +239,7 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
   };
 
   const calendarFields = fields.filter(f =>
-    f.type === 'select' &&
-    (f.isDefault ? f.showOnCalendar !== false : f.showOnCalendar === true)
+    f.isDefault ? f.showOnCalendar !== false : f.showOnCalendar === true
   );
 
   const getTagBadges = (t: Task) => {
@@ -250,13 +249,16 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
         ? (t as unknown as Record<string, string>)[field.id]
         : t.customFields?.[field.id];
       if (!val) continue;
-      // match by value, then by label (Notion tasks use raw Japanese labels)
-      const opt = field.options?.find(o => o.value === val)
-               ?? field.options?.find(o => o.label.toLowerCase() === val.toLowerCase());
-      if (opt) {
-        badges.push({ label: opt.label, color: opt.color ?? 'var(--gray-3)' });
+
+      if (field.type === 'select') {
+        const opt = field.options?.find(o => o.value === val)
+                 ?? field.options?.find(o => o.label.toLowerCase() === val.toLowerCase());
+        badges.push(opt
+          ? { label: opt.label, color: opt.color ?? 'var(--gray-3)' }
+          : { label: val, color: 'var(--gray-3)' }
+        );
       } else {
-        // no matching option → show raw value as-is (e.g. Notion values)
+        // text field — show raw value in gray
         badges.push({ label: val, color: 'var(--gray-3)' });
       }
     }

@@ -13,8 +13,6 @@ export default function TagFilterPanel() {
   const startX   = useRef(0);
   const startW   = useRef(DEFAULT_W);
 
-  const selectFields = fields.filter(f => f.type === 'select');
-
   const isVisible = (f: typeof fields[0]) =>
     f.isDefault ? f.showOnCalendar !== false : f.showOnCalendar === true;
 
@@ -26,7 +24,7 @@ export default function TagFilterPanel() {
 
     const onMove = (ev: MouseEvent) => {
       if (!dragging.current) return;
-      const delta = startX.current - ev.clientX; // drag left = grow
+      const delta = startX.current - ev.clientX;
       setWidth(Math.min(MAX_W, Math.max(MIN_W, startW.current + delta)));
     };
     const onUp = () => {
@@ -40,12 +38,11 @@ export default function TagFilterPanel() {
 
   return (
     <aside className="tag-filter" style={{ width }}>
-      {/* drag handle on the left edge */}
       <div className="tag-filter__resize-handle" onMouseDown={handleResizeMouseDown} />
 
       <div className="tag-filter__header mono">TAGS</div>
       <div className="tag-filter__list">
-        {selectFields.map(field => {
+        {fields.map(field => {
           const visible = isVisible(field);
           return (
             <label key={field.id} className={`tag-filter__row${visible ? ' active' : ''}`}>
@@ -57,18 +54,17 @@ export default function TagFilterPanel() {
               />
               <span className="tag-filter__name">{field.name}</span>
               <span className="tag-filter__dots">
-                {field.options?.slice(0, 3).map(o => (
-                  <span
-                    key={o.value}
-                    className="tag-filter__dot"
-                    style={{ background: o.color ?? '#888' }}
-                  />
-                ))}
+                {field.type === 'select'
+                  ? field.options?.slice(0, 3).map(o => (
+                      <span key={o.value} className="tag-filter__dot" style={{ background: o.color ?? '#888' }} />
+                    ))
+                  : <span className="tag-filter__type-label mono">Aa</span>
+                }
               </span>
             </label>
           );
         })}
-        {selectFields.length === 0 && (
+        {fields.length === 0 && (
           <p className="tag-filter__empty mono">no fields</p>
         )}
       </div>
