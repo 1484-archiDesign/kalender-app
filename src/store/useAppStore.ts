@@ -10,9 +10,9 @@ const DEFAULT_FIELDS: FieldDefinition[] = [
     type: 'select',
     isDefault: true,
     options: [
-      { value: 'work', label: 'Work', color: '#1B4D8E' },
-      { value: 'personal', label: 'Personal', color: '#E63329' },
-      { value: 'other', label: 'Other', color: '#F5C400' },
+      { value: 'work',     label: 'Work',     color: '#1B4D8E' },
+      { value: 'personal', label: 'Personal', color: '#D62B2B' },
+      { value: 'other',    label: 'Other',    color: '#F5C400' },
     ],
   },
   {
@@ -21,9 +21,9 @@ const DEFAULT_FIELDS: FieldDefinition[] = [
     type: 'select',
     isDefault: true,
     options: [
-      { value: 'todo', label: 'TODO', color: '#8A8A8A' },
+      { value: 'todo',       label: 'TODO',        color: '#8A8378' },
       { value: 'inprogress', label: 'IN PROGRESS', color: '#1B4D8E' },
-      { value: 'done', label: 'DONE', color: '#2A7A2A' },
+      { value: 'done',       label: 'DONE',        color: '#2A7A3B' },
     ],
   },
   {
@@ -32,9 +32,9 @@ const DEFAULT_FIELDS: FieldDefinition[] = [
     type: 'select',
     isDefault: true,
     options: [
-      { value: 'high', label: 'HIGH', color: '#E63329' },
+      { value: 'high',   label: 'HIGH',   color: '#D62B2B' },
       { value: 'medium', label: 'MEDIUM', color: '#F5C400' },
-      { value: 'low', label: 'LOW', color: '#8A8A8A' },
+      { value: 'low',    label: 'LOW',    color: '#8A8378' },
     ],
   },
 ];
@@ -47,27 +47,36 @@ interface AppState {
   notionConfig: NotionConfig | null;
   settingsOpen: boolean;
   notionSettingsOpen: boolean;
+  syncing: boolean;
 
-  addTask: (task: Task) => void;
-  updateTask: (id: string, updates: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
-  syncNotionTasks: (tasks: Task[]) => void;
+  // ── Task operations ──
+  addTask:        (task: Task) => void;
+  updateTask:     (id: string, updates: Partial<Task>) => void;
+  deleteTask:     (id: string) => void;
+  syncNotionTasks:(tasks: Task[]) => void;
+  setAllTasks:    (tasks: Task[]) => void;      // Supabase hydration
 
-  setView: (view: CalendarView) => void;
+  // ── Navigation ──
+  setView:        (view: CalendarView) => void;
   setCurrentDate: (date: string) => void;
-  navigatePrev: () => void;
-  navigateNext: () => void;
-  navigateToday: () => void;
+  navigatePrev:   () => void;
+  navigateNext:   () => void;
+  navigateToday:  () => void;
 
-  addField: (field: FieldDefinition) => void;
+  // ── Fields ──
+  addField:    (field: FieldDefinition) => void;
   updateField: (id: string, updates: Partial<FieldDefinition>) => void;
   deleteField: (id: string) => void;
+  setFields:   (fields: FieldDefinition[]) => void; // Supabase hydration
 
-  setNotionConfig: (config: NotionConfig) => void;
+  // ── Notion config ──
+  setNotionConfig:   (config: NotionConfig) => void;
   clearNotionConfig: () => void;
 
-  setSettingsOpen: (open: boolean) => void;
-  setNotionSettingsOpen: (open: boolean) => void;
+  // ── UI ──
+  setSettingsOpen:      (open: boolean) => void;
+  setNotionSettingsOpen:(open: boolean) => void;
+  setSyncing:           (v: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -80,21 +89,20 @@ export const useAppStore = create<AppState>()(
       notionConfig: null,
       settingsOpen: false,
       notionSettingsOpen: false,
+      syncing: false,
 
-      addTask: (task) => set((s) => ({ tasks: [...s.tasks, task] })),
-      updateTask: (id, updates) =>
-        set((s) => ({
-          tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
-        })),
-      deleteTask: (id) =>
-        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
+      // Tasks
+      addTask:    (task)    => set(s => ({ tasks: [...s.tasks, task] })),
+      updateTask: (id, upd) => set(s => ({ tasks: s.tasks.map(t => t.id === id ? { ...t, ...upd } : t) })),
+      deleteTask: (id)      => set(s => ({ tasks: s.tasks.filter(t => t.id !== id) })),
+      setAllTasks:(tasks)   => set({ tasks }),
       syncNotionTasks: (notionTasks) =>
-        set((s) => {
-          const localTasks = s.tasks.filter((t) => t.source === 'local');
-          return { tasks: [...localTasks, ...notionTasks] };
-        }),
+        set(s => ({
+          tasks: [...s.tasks.filter(t => t.source === 'local'), ...notionTasks],
+        })),
 
-      setView: (view) => set({ view }),
+      // Navigation
+      setView:        (view) => set({ view }),
       setCurrentDate: (date) => set({ currentDate: date }),
       navigatePrev: () => {
         const { view, currentDate } = get();
@@ -112,22 +120,21 @@ export const useAppStore = create<AppState>()(
         set({ currentDate: dayjs().startOf(unit).toISOString() });
       },
 
-      addField: (field) => set((s) => ({ fields: [...s.fields, field] })),
-      updateField: (id, updates) =>
-        set((s) => ({
-          fields: s.fields.map((f) => (f.id === id ? { ...f, ...updates } : f)),
-        })),
-      deleteField: (id) =>
-        set((s) => ({ fields: s.fields.filter((f) => f.id !== id) })),
+      // Fields
+      addField:    (f)      => set(s => ({ fields: [...s.fields, f] })),
+      updateField: (id, upd)=> set(s => ({ fields: s.fields.map(f => f.id === id ? { ...f, ...upd } : f) })),
+      deleteField: (id)     => set(s => ({ fields: s.fields.filter(f => f.id !== id) })),
+      setFields:   (fields) => set({ fields }),
 
-      setNotionConfig: (config) => set({ notionConfig: config }),
-      clearNotionConfig: () => set({ notionConfig: null }),
+      // Notion
+      setNotionConfig:   (config) => set({ notionConfig: config }),
+      clearNotionConfig: ()       => set({ notionConfig: null }),
 
-      setSettingsOpen: (open) => set({ settingsOpen: open }),
+      // UI
+      setSettingsOpen:       (open) => set({ settingsOpen: open }),
       setNotionSettingsOpen: (open) => set({ notionSettingsOpen: open }),
+      setSyncing:            (v)    => set({ syncing: v }),
     }),
-    {
-      name: 'bauhaus-calendar-store',
-    }
+    { name: 'bauhaus-calendar-store' }
   )
 );

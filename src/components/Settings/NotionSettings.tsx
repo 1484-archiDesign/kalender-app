@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import './NotionSettings.css';
 
-export default function NotionSettings() {
+interface Props { onSaved?: () => void; }
+
+export default function NotionSettings({ onSaved }: Props) {
   const { notionConfig, setNotionConfig, clearNotionConfig, setNotionSettingsOpen } = useAppStore();
   const [form, setForm] = useState({
     apiKey: '',
@@ -46,6 +48,7 @@ export default function NotionSettings() {
         priority: form.priorityField || undefined,
       },
     });
+    onSaved?.();
     setNotionSettingsOpen(false);
   };
 

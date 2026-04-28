@@ -7,11 +7,13 @@ import './TaskModal.css';
 interface Props {
   task: Partial<Task> | null;
   onClose: () => void;
+  onSave:   (task: Task) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-export default function TaskModal({ task, onClose }: Props) {
-  const { addTask, updateTask, deleteTask, fields } = useAppStore();
-  const isNew = !task?.id;
+export default function TaskModal({ task, onClose, onSave, onDelete }: Props) {
+  const { fields } = useAppStore();
+  const isNew    = !task?.id;
   const isNotion = task?.source === 'notion';
 
   const [form, setForm] = useState({
@@ -23,44 +25,46 @@ export default function TaskModal({ task, onClose }: Props) {
     priority: '',
     customFields: {} as Record<string, string>,
   });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (task) {
       setForm({
-        title: task.title ?? '',
-        startTime: task.startTime ? dayjs(task.startTime).format('YYYY-MM-DDTHH:mm') : '',
-        endTime: task.endTime ? dayjs(task.endTime).format('YYYY-MM-DDTHH:mm') : '',
-        category: task.category ?? '',
-        progress: task.progress ?? '',
-        priority: task.priority ?? '',
+        title:        task.title ?? '',
+        startTime:    task.startTime ? dayjs(task.startTime).format('YYYY-MM-DDTHH:mm') : '',
+        endTime:      task.endTime   ? dayjs(task.endTime).format('YYYY-MM-DDTHH:mm')   : '',
+        category:     task.category  ?? '',
+        progress:     task.progress  ?? '',
+        priority:     task.priority  ?? '',
         customFields: task.customFields ?? {},
       });
     }
   }, [task]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title.trim() || !form.startTime || !form.endTime) return;
-
-    const base = {
-      title: form.title.trim(),
-      startTime: dayjs(form.startTime).toISOString(),
-      endTime: dayjs(form.endTime).toISOString(),
-      category: form.category || undefined,
-      progress: form.progress || undefined,
-      priority: form.priority || undefined,
+    setSaving(true);
+    const built: Task = {
+      id:           task?.id ?? crypto.randomUUID(),
+      source:       'local',
+      title:        form.title.trim(),
+      startTime:    dayjs(form.startTime).toISOString(),
+      endTime:      dayjs(form.endTime).toISOString(),
+      category:     form.category  || undefined,
+      progress:     form.progress  || undefined,
+      priority:     form.priority  || undefined,
       customFields: Object.keys(form.customFields).length ? form.customFields : undefined,
     };
-
-    if (isNew) {
-      addTask({ ...base, id: crypto.randomUUID(), source: 'local' });
-    } else {
-      updateTask(task!.id!, base);
-    }
+    await onSave(built);
+    setSaving(false);
     onClose();
   };
 
-  const handleDelete = () => {
-    if (task?.id) deleteTask(task.id);
+  const handleDelete = async () => {
+    if (!task?.id) return;
+    setSaving(true);
+    await onDelete(task.id);
+    setSaving(false);
     onClose();
   };
 
@@ -133,9 +137,9 @@ export default function TaskModal({ task, onClose }: Props) {
                 </select>
                 {(form as unknown as Record<string, string>)[field.id] && (() => {
                   const opt = field.options?.find(o => o.value === (form as unknown as Record<string, string>)[field.id]);
-                  return opt?.color ? (
-                    <span className="task-modal__color-dot" style={{ background: opt.color }} />
-                  ) : null;
+                  return opt?.color
+                    ? <span className="task-modal__color-dot" style={{ background: opt.color }} />
+                    : null;
                 })()}
               </div>
             </div>
@@ -152,8 +156,7 @@ export default function TaskModal({ task, onClose }: Props) {
                 <select
                   value={form.customFields[field.id] ?? ''}
                   onChange={e => setForm(f => ({
-                    ...f,
-                    customFields: { ...f.customFields, [field.id]: e.target.value },
+                    ...f, customFields: { ...f.customFields, [field.id]: e.target.value },
                   }))}
                   disabled={isNotion}
                 >
@@ -167,8 +170,7 @@ export default function TaskModal({ task, onClose }: Props) {
                   type="text"
                   value={form.customFields[field.id] ?? ''}
                   onChange={e => setForm(f => ({
-                    ...f,
-                    customFields: { ...f.customFields, [field.id]: e.target.value },
+                    ...f, customFields: { ...f.customFields, [field.id]: e.target.value },
                   }))}
                   disabled={isNotion}
                 />
@@ -179,12 +181,14 @@ export default function TaskModal({ task, onClose }: Props) {
 
         <div className="modal__footer">
           {!isNew && !isNotion && (
-            <button className="btn btn--red btn--sm" onClick={handleDelete}>DELETE</button>
+            <button className="btn btn--red btn--sm" onClick={handleDelete} disabled={saving}>
+              DELETE
+            </button>
           )}
-          <button className="btn btn--sm" onClick={onClose}>CANCEL</button>
+          <button className="btn btn--sm" onClick={onClose} disabled={saving}>CANCEL</button>
           {!isNotion && (
-            <button className="btn btn--primary btn--sm" onClick={handleSave}>
-              {isNew ? 'CREATE' : 'SAVE'}
+            <button className="btn btn--primary btn--sm" onClick={handleSave} disabled={saving}>
+              {saving ? '…' : isNew ? 'CREATE' : 'SAVE'}
             </button>
           )}
         </div>

@@ -7,6 +7,17 @@
   background: var(--cream);
 }
 
+.app__sync-bar {
+  background: var(--blue);
+  color: var(--cream);
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
 .app__main {
   display: flex;
   flex: 1;

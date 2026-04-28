@@ -3,173 +3,221 @@ import type { FieldDefinition, FieldOption } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import './FieldSettings.css';
 
-export default function FieldSettings() {
+const PRESET_COLORS = [
+  '#D62B2B', '#1B4D8E', '#F5C400', '#2A7A3B',
+  '#8A3A8A', '#E87820', '#2A7A7A', '#8A8378',
+];
+
+interface Props { onSaved?: () => void; }
+
+export default function FieldSettings({ onSaved }: Props) {
   const { fields, addField, updateField, deleteField, setSettingsOpen } = useAppStore();
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldType, setNewFieldType] = useState<'select' | 'text'>('select');
 
   const handleAddField = () => {
     if (!newFieldName.trim()) return;
+    const id = crypto.randomUUID();
     addField({
-      id: crypto.randomUUID(),
+      id,
       name: newFieldName.trim(),
       type: newFieldType,
       options: newFieldType === 'select' ? [] : undefined,
     });
     setNewFieldName('');
-  };
-
-  const handleAddOption = (fieldId: string) => {
-    const field = fields.find(f => f.id === fieldId);
-    if (!field) return;
-    const label = prompt('選択肢のラベルを入力');
-    if (!label?.trim()) return;
-    const newOpt: FieldOption = {
-      value: label.trim().toLowerCase().replace(/\s+/g, '_'),
-      label: label.trim(),
-      color: '#8A8580',
-    };
-    updateField(fieldId, { options: [...(field.options ?? []), newOpt] });
-  };
-
-  const handleRemoveOption = (fieldId: string, optValue: string) => {
-    const field = fields.find(f => f.id === fieldId);
-    if (!field) return;
-    updateField(fieldId, { options: field.options?.filter(o => o.value !== optValue) });
-  };
-
-  const handleOptionColorChange = (fieldId: string, optValue: string, color: string) => {
-    const field = fields.find(f => f.id === fieldId);
-    if (!field) return;
-    updateField(fieldId, {
-      options: field.options?.map(o => o.value === optValue ? { ...o, color } : o),
-    });
-  };
-
-  const handleOptionLabelChange = (fieldId: string, optValue: string, label: string) => {
-    const field = fields.find(f => f.id === fieldId);
-    if (!field) return;
-    updateField(fieldId, {
-      options: field.options?.map(o => o.value === optValue ? { ...o, label } : o),
-    });
+    setExpandedId(id);
+    onSaved?.();
   };
 
   return (
     <div className="overlay" onClick={() => setSettingsOpen(false)}>
-      <div className="modal modal--wide" onClick={e => e.stopPropagation()}>
+      <div className="modal modal--wide fs-modal" onClick={e => e.stopPropagation()}>
         <div className="modal__header">
           <h2>FIELD SETTINGS</h2>
           <button className="modal__close btn btn--icon" onClick={() => setSettingsOpen(false)}>✕</button>
         </div>
 
         <div className="modal__body">
+
           {fields.map(field => (
             <FieldRow
               key={field.id}
               field={field}
-              isExpanded={editingId === field.id}
-              onToggle={() => setEditingId(editingId === field.id ? null : field.id)}
-              onDelete={() => !field.isDefault && deleteField(field.id)}
-              onAddOption={() => handleAddOption(field.id)}
-              onRemoveOption={(v) => handleRemoveOption(field.id, v)}
-              onColorChange={(v, c) => handleOptionColorChange(field.id, v, c)}
-              onLabelChange={(v, l) => handleOptionLabelChange(field.id, v, l)}
-              onRename={(name) => updateField(field.id, { name })}
+              isExpanded={expandedId === field.id}
+              onToggle={() => setExpandedId(expandedId === field.id ? null : field.id)}
+              onDelete={() => { deleteField(field.id); }}
+              onUpdateField={(updates) => updateField(field.id, updates)}
             />
           ))}
 
-          {/* Add new field */}
-          <div className="field-settings__add">
-            <div className="section-label">ADD NEW FIELD</div>
-            <div className="field-settings__add-row">
+          {/* ── Add new field ── */}
+          <div className="fs-add">
+            <p className="section-label">NEW FIELD</p>
+            <div className="fs-add__row">
               <input
                 type="text"
-                placeholder="フィールド名"
+                className="fs-add__name"
+                placeholder="フィールド名（例：場所）"
                 value={newFieldName}
                 onChange={e => setNewFieldName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAddField()}
               />
-              <select value={newFieldType} onChange={e => setNewFieldType(e.target.value as 'select' | 'text')}>
-                <option value="select">Select</option>
-                <option value="text">Text</option>
-              </select>
+              <div className="fs-add__type-toggle">
+                <button
+                  className={`fs-add__type-btn${newFieldType === 'select' ? ' active' : ''}`}
+                  onClick={() => setNewFieldType('select')}
+                >SELECT</button>
+                <button
+                  className={`fs-add__type-btn${newFieldType === 'text' ? ' active' : ''}`}
+                  onClick={() => setNewFieldType('text')}
+                >TEXT</button>
+              </div>
               <button className="btn btn--primary btn--sm" onClick={handleAddField}>+ ADD</button>
             </div>
           </div>
+
         </div>
 
         <div className="modal__footer">
-          <button className="btn btn--sm btn--primary" onClick={() => setSettingsOpen(false)}>DONE</button>
+          <button className="btn btn--primary btn--sm" onClick={() => setSettingsOpen(false)}>DONE</button>
         </div>
       </div>
     </div>
   );
 }
 
+/* ════════════════════════════════
+   FIELD ROW
+   ════════════════════════════════ */
 interface FieldRowProps {
   field: FieldDefinition;
   isExpanded: boolean;
   onToggle: () => void;
   onDelete: () => void;
-  onAddOption: () => void;
-  onRemoveOption: (v: string) => void;
-  onColorChange: (v: string, c: string) => void;
-  onLabelChange: (v: string, l: string) => void;
-  onRename: (name: string) => void;
+  onUpdateField: (updates: Partial<FieldDefinition>) => void;
 }
 
-function FieldRow({ field, isExpanded, onToggle, onDelete, onAddOption, onRemoveOption, onColorChange, onLabelChange, onRename }: FieldRowProps) {
+function FieldRow({ field, isExpanded, onToggle, onDelete, onUpdateField }: FieldRowProps) {
+  const [newOptLabel, setNewOptLabel]   = useState('');
+  const [newOptColor, setNewOptColor]   = useState(PRESET_COLORS[0]);
+
+  const addOption = () => {
+    if (!newOptLabel.trim()) return;
+    const opt: FieldOption = {
+      value: newOptLabel.trim().toLowerCase().replace(/\s+/g, '_'),
+      label: newOptLabel.trim(),
+      color: newOptColor,
+    };
+    onUpdateField({ options: [...(field.options ?? []), opt] });
+    setNewOptLabel('');
+    setNewOptColor(PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)]);
+  };
+
+  const removeOption = (value: string) =>
+    onUpdateField({ options: field.options?.filter(o => o.value !== value) });
+
+  const updateOptionColor = (value: string, color: string) =>
+    onUpdateField({ options: field.options?.map(o => o.value === value ? { ...o, color } : o) });
+
+  const updateOptionLabel = (value: string, label: string) =>
+    onUpdateField({ options: field.options?.map(o => o.value === value ? { ...o, label } : o) });
+
   return (
-    <div className="field-row">
-      <div className="field-row__header" onClick={onToggle}>
-        <div className="field-row__meta">
-          <span className="field-row__name">{field.name}</span>
+    <div className={`fs-row${isExpanded ? ' expanded' : ''}`}>
+      {/* Header */}
+      <div className="fs-row__header" onClick={onToggle}>
+        <div className="fs-row__left">
+          <span className="fs-row__chevron">{isExpanded ? '▼' : '▶'}</span>
+          <span className="fs-row__name">{field.name}</span>
           <span className="tag">{field.type}</span>
-          {field.isDefault && <span className="tag" style={{ color: 'var(--gray-3)', borderColor: 'var(--gray-2)' }}>default</span>}
+          {field.isDefault && <span className="tag fs-row__default-tag">DEFAULT</span>}
         </div>
-        <div className="field-row__actions" onClick={e => e.stopPropagation()}>
+        <div className="fs-row__right" onClick={e => e.stopPropagation()}>
+          {/* Color preview dots */}
+          {field.options?.slice(0, 4).map(o => (
+            <span key={o.value} className="fs-row__dot" style={{ background: o.color ?? '#888' }} />
+          ))}
           {!field.isDefault && (
-            <button className="btn btn--sm btn--red" onClick={onDelete}>✕</button>
+            <button className="btn btn--red btn--sm" onClick={onDelete}>✕</button>
           )}
-          <span className="field-row__toggle">{isExpanded ? '▲' : '▼'}</span>
         </div>
       </div>
 
+      {/* Expanded body */}
       {isExpanded && (
-        <div className="field-row__body">
-          <div className="field-row__rename">
+        <div className="fs-row__body">
+          {/* Rename */}
+          <div className="fs-row__rename-row">
+            <label>フィールド名</label>
             <input
               type="text"
               defaultValue={field.name}
-              onBlur={e => onRename(e.target.value)}
-              placeholder="フィールド名"
+              onBlur={e => onUpdateField({ name: e.target.value.trim() || field.name })}
             />
           </div>
 
+          {/* Options list (select type only) */}
           {field.type === 'select' && (
-            <div className="field-row__options">
-              <div className="section-label">OPTIONS</div>
-              {field.options?.map(opt => (
-                <div key={opt.value} className="field-row__option">
-                  <input
-                    type="color"
-                    value={opt.color ?? '#8A8580'}
-                    onChange={e => onColorChange(opt.value, e.target.value)}
-                    className="field-row__color-input"
-                    title="色を変更"
-                  />
+            <>
+              <p className="fs-row__section-title">
+                選択肢 <span>{field.options?.length ?? 0}件</span>
+              </p>
+
+              <div className="fs-opts">
+                {field.options?.map(opt => (
+                  <div key={opt.value} className="fs-opt">
+                    {/* Color swatch + picker */}
+                    <div className="fs-opt__color-wrap">
+                      <span className="fs-opt__swatch" style={{ background: opt.color ?? '#888' }} />
+                      <input
+                        type="color"
+                        value={opt.color ?? '#888888'}
+                        onChange={e => updateOptionColor(opt.value, e.target.value)}
+                        className="fs-opt__color-input"
+                        title="色を変更"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      defaultValue={opt.label}
+                      onBlur={e => updateOptionLabel(opt.value, e.target.value)}
+                      className="fs-opt__label-input"
+                    />
+                    <button
+                      className="fs-opt__remove"
+                      onClick={() => removeOption(opt.value)}
+                      title="削除"
+                    >✕</button>
+                  </div>
+                ))}
+
+                {/* ── Add option inline ── */}
+                <div className="fs-opt fs-opt--new">
+                  {/* Color presets */}
+                  <div className="fs-opt__presets">
+                    {PRESET_COLORS.map(c => (
+                      <button
+                        key={c}
+                        className={`fs-opt__preset${newOptColor === c ? ' selected' : ''}`}
+                        style={{ background: c }}
+                        onClick={() => setNewOptColor(c)}
+                        title={c}
+                      />
+                    ))}
+                  </div>
                   <input
                     type="text"
-                    defaultValue={opt.label}
-                    onBlur={e => onLabelChange(opt.value, e.target.value)}
-                    className="field-row__option-label"
+                    placeholder="新しい選択肢（例：東京オフィス）"
+                    value={newOptLabel}
+                    onChange={e => setNewOptLabel(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addOption()}
+                    className="fs-opt__label-input"
                   />
-                  <button className="btn btn--sm btn--icon" onClick={() => onRemoveOption(opt.value)}>✕</button>
+                  <button className="btn btn--primary btn--sm" onClick={addOption}>+ ADD</button>
                 </div>
-              ))}
-              <button className="btn btn--sm" onClick={onAddOption}>+ Add Option</button>
-            </div>
+              </div>
+            </>
           )}
         </div>
       )}
