@@ -1,12 +1,28 @@
 .tag-filter {
-  width: 120px;
   flex-shrink: 0;
+  position: relative;
   border-left: var(--border-thick);
   background: var(--black);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   z-index: 1;
+}
+
+.tag-filter__resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background 80ms;
+}
+.tag-filter__resize-handle:hover,
+.tag-filter__resize-handle:active {
+  background: var(--yellow);
 }
 
 .tag-filter__header {
