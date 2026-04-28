@@ -58,14 +58,16 @@ export default function App() {
   }, [store, sbUpsertTask]);
 
   const handleSaveFields = useCallback(async () => {
-    if (isSupabaseEnabled) await sbSaveSettings('fields', store.fields);
-  }, [store, sbSaveSettings]);
+    if (!isSupabaseEnabled) return;
+    const { fields } = useAppStore.getState();
+    await sbSaveSettings('fields', fields);
+  }, [sbSaveSettings]);
 
   const handleSaveNotionConfig = useCallback(async () => {
-    if (isSupabaseEnabled && store.notionConfig) {
-      await sbSaveSettings('notion_config', store.notionConfig);
-    }
-  }, [store, sbSaveSettings]);
+    if (!isSupabaseEnabled) return;
+    const { notionConfig } = useAppStore.getState();
+    if (notionConfig) await sbSaveSettings('notion_config', notionConfig);
+  }, [sbSaveSettings]);
 
   return (
     <div className="app">
