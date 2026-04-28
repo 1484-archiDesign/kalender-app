@@ -40,6 +40,13 @@ export default function MonthView({ onCreateTask, onEditTask }: Props) {
     return 'var(--blue)';
   };
 
+  const dayTypeClass = (day: dayjs.Dayjs) => {
+    const dow = day.day();
+    if (dow === 0) return ' --sun';
+    if (dow === 6) return ' --sat';
+    return ' --weekday';
+  };
+
   const handleDayClick = (day: dayjs.Dayjs) => {
     const start = day.hour(9).minute(0).toISOString();
     const end = day.hour(10).minute(0).toISOString();
@@ -66,7 +73,7 @@ export default function MonthView({ onCreateTask, onEditTask }: Props) {
               return (
                 <div
                   key={di}
-                  className={`month-view__day${isCurrentMonth ? '' : ' other-month'}${isToday ? ' today' : ''}`}
+                  className={`month-view__day${dayTypeClass(day)}${isCurrentMonth ? '' : ' other-month'}${isToday ? ' today' : ''}`}
                   onClick={() => handleDayClick(day)}
                 >
                   <div className="month-view__day-num-wrap">

@@ -65,14 +65,48 @@
 .month-view__day:last-child { border-right: none; }
 .month-view__day:hover { background: var(--gray-1); }
 
+/* Day-type background colors */
+.month-view__day.--sun {
+  background: rgba(214, 43, 43, 0.06);
+}
+.month-view__day.--sun::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--red);
+}
+
+.month-view__day.--sat {
+  background: rgba(27, 77, 142, 0.06);
+}
+.month-view__day.--sat::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--blue);
+}
+
+.month-view__day.--weekday {
+  background: var(--cream);
+}
+.month-view__day.--weekday::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--yellow);
+}
+
 .month-view__day.other-month {
   background: rgba(0,0,0,0.02);
 }
 .month-view__day.other-month .month-view__day-num { color: var(--gray-2); }
 
-/* Today — yellow accent */
+/* Today — yellow accent (overrides day-type bar) */
 .month-view__day.today {
-  background: rgba(245,196,0,0.08);
+  background: rgba(245,196,0,0.08) !important;
 }
 .month-view__day.today::before {
   content: '';
@@ -81,7 +115,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--yellow);
+  background: var(--yellow) !important;
 }
 
 .month-view__day-num-wrap {
