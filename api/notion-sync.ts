@@ -75,11 +75,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
         body: JSON.stringify({
           page_size: limit ?? 100,
-          filter: {
-            property: fm.startTime,
-            date: { is_not_empty: true },
-          },
-          sorts: [{ property: fm.startTime, direction: 'ascending' }],
         }),
       }
     );
