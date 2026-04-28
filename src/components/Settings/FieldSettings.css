@@ -1,0 +1,121 @@
+.field-row {
+  border: var(--border);
+  margin-bottom: 8px;
+}
+
+.field-row__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: var(--gray-1);
+  user-select: none;
+  transition: background 80ms;
+}
+.field-row__header:hover { background: var(--gray-2); }
+
+.field-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-row__name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.field-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-row__toggle {
+  font-size: 10px;
+  color: var(--gray-3);
+  font-family: var(--font-mono);
+}
+
+.field-row__body {
+  padding: 12px 14px;
+  border-top: 1px solid var(--gray-2);
+}
+
+.field-row__rename {
+  margin-bottom: 12px;
+}
+
+.field-row__rename input {
+  width: 100%;
+  padding: 6px 8px;
+  border: var(--border);
+  background: var(--white);
+  font-size: 13px;
+  outline: none;
+}
+.field-row__rename input:focus { box-shadow: 3px 3px 0 var(--black); }
+
+.field-row__options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-row__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-row__color-input {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: var(--border);
+  cursor: pointer;
+  background: none;
+  flex-shrink: 0;
+}
+
+.field-row__option-label {
+  flex: 1;
+  padding: 5px 8px;
+  border: var(--border);
+  background: var(--white);
+  font-size: 12px;
+  outline: none;
+}
+.field-row__option-label:focus { box-shadow: 2px 2px 0 var(--black); }
+
+/* Add field row */
+.field-settings__add {
+  margin-top: 8px;
+}
+
+.field-settings__add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.field-settings__add-row input {
+  flex: 1;
+  padding: 7px 10px;
+  border: var(--border);
+  background: var(--white);
+  font-size: 13px;
+  outline: none;
+}
+.field-settings__add-row input:focus { box-shadow: 3px 3px 0 var(--black); }
+
+.field-settings__add-row select {
+  padding: 7px 10px;
+  border: var(--border);
+  background: var(--white);
+  font-size: 12px;
+  outline: none;
+  font-family: var(--font-mono);
+  appearance: none;
+  cursor: pointer;
+}
