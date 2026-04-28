@@ -214,7 +214,11 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
     return 'week-view__task--blue';
   };
 
-  const calendarFields = fields.filter(f => f.showOnCalendar && f.type === 'select');
+  // default fields visible unless explicitly turned off; custom fields need opt-in
+  const calendarFields = fields.filter(f =>
+    f.type === 'select' &&
+    (f.isDefault ? f.showOnCalendar !== false : f.showOnCalendar === true)
+  );
 
   const getTagBadges = (t: Task) => {
     const badges: { label: string; color: string }[] = [];
