@@ -15,6 +15,12 @@
   grid-template-columns: var(--time-col-w) repeat(7, 1fr);
   border-bottom: var(--border-thick);
   flex-shrink: 0;
+  /* match body scrollbar gutter to keep columns aligned */
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+.week-view__day-headers::-webkit-scrollbar {
+  display: none;
 }
 
 .week-view__time-gutter {
