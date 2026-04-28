@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import dayjs from 'dayjs';
 import { useAppStore } from '../../store/useAppStore';
 import type { Task } from '../../types';
@@ -20,6 +20,7 @@ interface CreateDrag {
 interface MoveDrag {
   type: 'move';
   taskId: string;
+  task: Task;
   duration: number;
   offsetMinutes: number;
   dayIndex: number;
@@ -76,16 +77,27 @@ interface Props {
 export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props) {
   const { tasks, currentDate, fields } = useAppStore();
   const gridRef   = useRef<HTMLDivElement>(null);
-  const [drag, setDrag] = useState<DragState>(null);
+  const [drag, setDrag]         = useState<DragState>(null);
+  const [dragMoved, setDragMoved] = useState(false);
 
   const weekStart = dayjs(currentDate).startOf('week');
   const today     = dayjs();
+
+  /* ── scroll to 6:00 on mount ── */
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    // wait one frame for layout
+    requestAnimationFrame(() => {
+      el.scrollTop = (6 / 24) * el.scrollHeight;
+    });
+  }, []);
 
   /* ── helpers ── */
   const snapMins = (raw: number) => Math.round(raw / 15) * 15;
 
   const getMinutesFromY = useCallback((y: number, colH: number) =>
-    snapMins(Math.floor((y / colH) * 1440)), []);
+    snapMins(Math.max(0, Math.min(1425, Math.floor((y / colH) * 1440)))), []);
 
   const getPositionFromMouse = useCallback((e: React.MouseEvent) => {
     const body = gridRef.current;
@@ -98,7 +110,7 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
     const colW = (rect.width - timeColW) / 7;
     const dayIndex = Math.max(0, Math.min(6, Math.floor(x / colW)));
     const y = e.clientY - rect.top + body.scrollTop;
-    const minutes = Math.max(0, Math.min(1425, snapMins((y / body.scrollHeight) * 1440)));
+    const minutes = snapMins(Math.max(0, Math.min(1425, (y / body.scrollHeight) * 1440)));
     return { dayIndex, minutes };
   }, []);
 
@@ -109,6 +121,7 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
     const col  = e.currentTarget as HTMLElement;
     const mins = getMinutesFromY(e.clientY - col.getBoundingClientRect().top, col.clientHeight);
     setDrag({ type: 'create', dayIndex, startMinutes: mins, endMinutes: mins + 60 });
+    setDragMoved(false);
   }, [getMinutesFromY]);
 
   const handleColMouseMove = useCallback((e: React.MouseEvent, dayIndex: number) => {
@@ -116,16 +129,18 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
     const col  = e.currentTarget as HTMLElement;
     const mins = getMinutesFromY(e.clientY - col.getBoundingClientRect().top, col.clientHeight);
     setDrag(d => d && d.type === 'create' ? { ...d, endMinutes: Math.max(mins, d.startMinutes + 15) } : d);
+    setDragMoved(true);
   }, [drag, getMinutesFromY]);
 
   const handleColMouseUp = useCallback((dayIndex: number) => {
     if (!drag || drag.type !== 'create' || drag.dayIndex !== dayIndex) {
-      setDrag(null); return;
+      if (drag?.type === 'create') { setDrag(null); setDragMoved(false); }
+      return;
     }
     const day   = weekStart.add(drag.dayIndex, 'day');
     const start = day.startOf('day').add(drag.startMinutes, 'minute').toISOString();
     const end   = day.startOf('day').add(drag.endMinutes,   'minute').toISOString();
-    setDrag(null);
+    setDrag(null); setDragMoved(false);
     onCreateTask(start, end);
   }, [drag, weekStart, onCreateTask]);
 
@@ -140,13 +155,11 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
       ? getMinutesFromY(e.clientY - col.getBoundingClientRect().top, col.clientHeight)
       : sm;
     setDrag({
-      type: 'move',
-      taskId: t.id,
-      duration: em - sm,
-      offsetMinutes: Math.max(0, clickMins - sm),
-      dayIndex,
-      startMinutes: sm,
+      type: 'move', task: t, taskId: t.id,
+      duration: em - sm, offsetMinutes: Math.max(0, clickMins - sm),
+      dayIndex, startMinutes: sm,
     });
+    setDragMoved(false);
   }, [getMinutesFromY]);
 
   const handleBodyMouseMove = useCallback((e: React.MouseEvent) => {
@@ -154,20 +167,34 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
     const pos = getPositionFromMouse(e);
     if (!pos) return;
     const newStart = Math.max(0, Math.min(1440 - drag.duration, pos.minutes - drag.offsetMinutes));
+    if (!dragMoved && (newStart !== drag.startMinutes || pos.dayIndex !== drag.dayIndex)) {
+      setDragMoved(true);
+    }
     setDrag(d => d && d.type === 'move'
       ? { ...d, dayIndex: pos.dayIndex, startMinutes: newStart }
       : d);
-  }, [drag, getPositionFromMouse]);
+  }, [drag, dragMoved, getPositionFromMouse]);
 
   const handleBodyMouseUp = useCallback(async () => {
-    if (!drag || drag.type !== 'move') { setDrag(null); return; }
-    const day   = weekStart.add(drag.dayIndex, 'day');
-    const start = day.startOf('day').add(drag.startMinutes, 'minute').toISOString();
-    const end   = day.startOf('day').add(drag.startMinutes + drag.duration, 'minute').toISOString();
-    const captured = drag;
-    setDrag(null);
-    await onMoveTask(captured.taskId, start, end);
-  }, [drag, weekStart, onMoveTask]);
+    if (!drag) return;
+    if (drag.type === 'move') {
+      if (dragMoved) {
+        const day   = weekStart.add(drag.dayIndex, 'day');
+        const start = day.startOf('day').add(drag.startMinutes, 'minute').toISOString();
+        const end   = day.startOf('day').add(drag.startMinutes + drag.duration, 'minute').toISOString();
+        const captured = drag;
+        setDrag(null); setDragMoved(false);
+        await onMoveTask(captured.taskId, start, end);
+      } else {
+        // no movement → treat as click → open edit
+        const t = drag.task;
+        setDrag(null); setDragMoved(false);
+        onEditTask(t);
+      }
+    } else {
+      setDrag(null); setDragMoved(false);
+    }
+  }, [drag, dragMoved, weekStart, onMoveTask, onEditTask]);
 
   /* ── task style helpers ── */
   const taskPositionStyle = (t: Task, layout: TaskLayout) => {
@@ -183,16 +210,13 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
     };
   };
 
-  const moveGhostStyle = (drag: MoveDrag) => {
-    const colW = 100;
-    return {
-      top:    `${(drag.startMinutes / 1440) * 100}%`,
-      height: `${(drag.duration / 1440) * 100}%`,
-      left:   `${0.5}%`,
-      width:  `calc(${colW}% - 4px)`,
-      right:  'auto' as const,
-    };
-  };
+  const moveGhostStyle = (d: MoveDrag) => ({
+    top:    `${(d.startMinutes / 1440) * 100}%`,
+    height: `${(d.duration / 1440) * 100}%`,
+    left:   '0.5%',
+    width:  'calc(100% - 4px)',
+    right:  'auto' as const,
+  });
 
   const getBorderColor = (t: Task): string => {
     for (const fid of ['priority', 'category'] as const) {
@@ -214,7 +238,6 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
     return 'week-view__task--blue';
   };
 
-  // default fields visible unless explicitly turned off; custom fields need opt-in
   const calendarFields = fields.filter(f =>
     f.type === 'select' &&
     (f.isDefault ? f.showOnCalendar !== false : f.showOnCalendar === true)
@@ -240,7 +263,8 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
     return { top: `${(s / 1440) * 100}%`, height: `${((e - s) / 1440) * 100}%` };
   };
 
-  const movingTaskId = drag?.type === 'move' ? drag.taskId : null;
+  const movingTaskId  = drag?.type === 'move' ? drag.taskId  : null;
+  const ghostDayIndex = drag?.type === 'move' ? drag.dayIndex : -1;
 
   return (
     <div className="week-view">
@@ -268,15 +292,12 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
         ref={gridRef}
         onMouseMove={handleBodyMouseMove}
         onMouseUp={handleBodyMouseUp}
-        onMouseLeave={handleBodyMouseUp}
+        onMouseLeave={() => { if (drag?.type === 'move' && dragMoved) handleBodyMouseUp(); }}
       >
         {/* Time column */}
         <div className="week-view__time-col">
           {HOURS.map(h => (
-            <div
-              key={h}
-              className={`week-view__time-cell${h % 3 === 0 ? ' week-view__time-cell--bold' : ''}`}
-            >
+            <div key={h} className={`week-view__time-cell${h % 3 === 0 ? ' week-view__time-cell--bold' : ''}`}>
               <span className="week-view__time-label">
                 {h === 0 ? '' : `${String(h).padStart(2, '0')}:00`}
               </span>
@@ -290,7 +311,6 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
           const dayTasks = tasks.filter(t => dayjs(t.startTime).isSame(weekStart.add(i, 'day'), 'day'));
           const layouts  = computeLayouts(dayTasks);
           const ds       = dragPreviewStyle(i);
-          const isMovingHere = drag?.type === 'move' && drag.dayIndex === i;
 
           return (
             <div
@@ -299,9 +319,7 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
               onMouseDown={e => handleColMouseDown(e, i)}
               onMouseMove={e => handleColMouseMove(e, i)}
               onMouseUp={() => handleColMouseUp(i)}
-              onMouseLeave={() => { if (drag?.type === 'create' && drag.dayIndex === i) handleColMouseUp(i); }}
             >
-              {/* Grid lines */}
               {HOURS.map(h => (
                 <div key={h} className={`week-view__hour-line${h % 3 === 0 ? ' week-view__hour-line--bold' : ''}`}
                   style={{ top: `${(h / 24) * 100}%` }} />
@@ -311,29 +329,22 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
                   style={{ top: `${((h + 0.5) / 24) * 100}%` }} />
               ))}
 
-              {/* Create drag ghost */}
               {ds && <div className="week-view__drag-preview" style={ds} />}
 
-              {/* Move ghost */}
-              {isMovingHere && drag?.type === 'move' && (
-                <div
-                  className="week-view__move-ghost"
-                  style={moveGhostStyle(drag)}
-                />
+              {drag?.type === 'move' && dragMoved && ghostDayIndex === i && (
+                <div className="week-view__move-ghost" style={moveGhostStyle(drag)} />
               )}
 
-              {/* Tasks */}
               {layouts.map(layout => {
-                const t      = layout.task;
-                const isMoving = t.id === movingTaskId;
-                const badges = getTagBadges(t);
+                const t       = layout.task;
+                const isMoving = t.id === movingTaskId && dragMoved;
+                const badges  = getTagBadges(t);
                 return (
                   <div
                     key={t.id}
                     className={`week-view__task ${getColorClass(t)}${t.source === 'notion' ? ' notion' : ''}${isMoving ? ' moving' : ''}`}
                     style={{ ...taskPositionStyle(t, layout), borderLeftColor: getBorderColor(t) }}
                     onMouseDown={e => handleTaskMouseDown(e, t, i)}
-                    onClick={e => { if (!movingTaskId) { e.stopPropagation(); onEditTask(t); } }}
                   >
                     <span className="week-view__task-title">{t.title}</span>
                     {badges.length > 0 && (
@@ -349,7 +360,6 @@ export default function WeekView({ onCreateTask, onEditTask, onMoveTask }: Props
                 );
               })}
 
-              {/* Now line */}
               {weekStart.add(i, 'day').isSame(today, 'day') && (
                 <div className="week-view__now-line"
                   style={{ top: `${((today.hour() * 60 + today.minute()) / 1440) * 100}%` }} />
