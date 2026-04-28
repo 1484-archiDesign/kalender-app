@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppStore } from './store/useAppStore';
 import type { Task } from './types';
 import { useNotionSync } from './hooks/useNotionSync';
@@ -14,18 +14,32 @@ import TagFilterPanel from './components/TagFilter/TagFilterPanel';
 import './App.css';
 
 export default function App() {
-  const { view, settingsOpen, notionSettingsOpen, syncing } = useAppStore();
+  const { view, settingsOpen, notionSettingsOpen, syncing, fields, notionConfig } = useAppStore();
   const [taskModal, setTaskModal] = useState<Partial<Task> | null>(null);
 
-  // Supabase同期（設定済みの場合のみ有効）
   const { sbUpsertTask, sbDeleteTask, sbSaveSettings } = useSupabaseSync();
-
-  // Notion→カレンダー同期
   useNotionSync();
 
-  // ── タスク操作（Zustand + Supabase両方に書く）──
   const store = useAppStore();
 
+  // ── fields / notionConfig が変わるたびに Supabase へ自動保存 ──
+  const fieldsInitRef   = useRef(false);
+  const notionInitRef   = useRef(false);
+
+  useEffect(() => {
+    if (!fieldsInitRef.current) { fieldsInitRef.current = true; return; }
+    if (!isSupabaseEnabled) return;
+    const t = setTimeout(() => sbSaveSettings('fields', useAppStore.getState().fields), 600);
+    return () => clearTimeout(t);
+  }, [fields]);
+
+  useEffect(() => {
+    if (!notionInitRef.current) { notionInitRef.current = true; return; }
+    if (!isSupabaseEnabled || !notionConfig) return;
+    sbSaveSettings('notion_config', notionConfig);
+  }, [notionConfig]);
+
+  // ── タスク操作 ──
   const handleCreateTask = useCallback((start: string, end: string) => {
     setTaskModal({ startTime: start, endTime: end, source: 'local' });
   }, []);
@@ -36,11 +50,7 @@ export default function App() {
 
   const handleSaveTask = useCallback(async (task: Task) => {
     const isNew = !store.tasks.find(t => t.id === task.id);
-    if (isNew) {
-      store.addTask(task);
-    } else {
-      store.updateTask(task.id, task);
-    }
+    if (isNew) { store.addTask(task); } else { store.updateTask(task.id, task); }
     if (isSupabaseEnabled) await sbUpsertTask(task);
   }, [store, sbUpsertTask]);
 
@@ -57,23 +67,10 @@ export default function App() {
     }
   }, [store, sbUpsertTask]);
 
-  const handleSaveFields = useCallback(async () => {
-    if (!isSupabaseEnabled) return;
-    const { fields } = useAppStore.getState();
-    await sbSaveSettings('fields', fields);
-  }, [sbSaveSettings]);
-
-  const handleSaveNotionConfig = useCallback(async () => {
-    if (!isSupabaseEnabled) return;
-    const { notionConfig } = useAppStore.getState();
-    if (notionConfig) await sbSaveSettings('notion_config', notionConfig);
-  }, [sbSaveSettings]);
-
   return (
     <div className="app">
       <CalendarHeader />
 
-      {/* Supabase同期インジケーター */}
       {syncing && (
         <div className="app__sync-bar">
           <span className="mono">SYNCING…</span>
@@ -97,12 +94,8 @@ export default function App() {
           onDelete={handleDeleteTask}
         />
       )}
-      {settingsOpen && (
-        <FieldSettings onSaved={handleSaveFields} />
-      )}
-      {notionSettingsOpen && (
-        <NotionSettings onSaved={handleSaveNotionConfig} />
-      )}
+      {settingsOpen && <FieldSettings />}
+      {notionSettingsOpen && <NotionSettings />}
     </div>
   );
 }

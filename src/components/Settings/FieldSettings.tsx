@@ -8,9 +8,7 @@ const PRESET_COLORS = [
   '#8A3A8A', '#E87820', '#2A7A7A', '#8A8378',
 ];
 
-interface Props { onSaved?: () => void; }
-
-export default function FieldSettings({ onSaved }: Props) {
+export default function FieldSettings() {
   const { fields, addField, updateField, deleteField, setSettingsOpen } = useAppStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newFieldName, setNewFieldName] = useState('');
@@ -27,7 +25,6 @@ export default function FieldSettings({ onSaved }: Props) {
     });
     setNewFieldName('');
     setExpandedId(id);
-    onSaved?.();
   };
 
   return (
