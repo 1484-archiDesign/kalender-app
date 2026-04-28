@@ -4,6 +4,38 @@ import type { Task } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import './TaskModal.css';
 
+const HOURS   = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
+const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+
+function DateTimeInput({ value, onChange, disabled }: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  const date = value.slice(0, 10) || '';
+  const hh   = value.slice(11, 13) || '09';
+  const mm   = String(Math.round(parseInt(value.slice(14, 16) || '0') / 5) * 5).padStart(2, '0');
+
+  const emit = (d: string, h: string, m: string) =>
+    onChange(`${d}T${h}:${m}`);
+
+  return (
+    <div className="datetime-input">
+      <input type="date" value={date} disabled={disabled}
+        onChange={e => emit(e.target.value, hh, mm)} />
+      <select value={hh} disabled={disabled}
+        onChange={e => emit(date, e.target.value, mm)}>
+        {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+      </select>
+      <span className="datetime-input__sep">:</span>
+      <select value={mm} disabled={disabled}
+        onChange={e => emit(date, hh, e.target.value)}>
+        {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
+      </select>
+    </div>
+  );
+}
+
 interface Props {
   task: Partial<Task> | null;
   onClose: () => void;
@@ -99,25 +131,17 @@ export default function TaskModal({ task, onClose, onSave, onDelete }: Props) {
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Start</label>
-              <input
-                type="datetime-local"
-                value={form.startTime}
-                onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))}
-                disabled={isNotion}
-              />
-            </div>
-            <div className="form-group">
-              <label>End</label>
-              <input
-                type="datetime-local"
-                value={form.endTime}
-                onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))}
-                disabled={isNotion}
-              />
-            </div>
+          <div className="form-group">
+            <label>Start</label>
+            <DateTimeInput value={form.startTime}
+              onChange={v => setForm(f => ({ ...f, startTime: v }))}
+              disabled={isNotion} />
+          </div>
+          <div className="form-group">
+            <label>End</label>
+            <DateTimeInput value={form.endTime}
+              onChange={v => setForm(f => ({ ...f, endTime: v }))}
+              disabled={isNotion} />
           </div>
 
           {/* Default select fields */}

@@ -1,3 +1,23 @@
+.datetime-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.datetime-input input[type="date"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.datetime-input select {
+  width: 56px;
+}
+
+.datetime-input__sep {
+  font-weight: 700;
+  color: var(--gray-3);
+}
+
 .task-modal__notion-badge {
   display: flex;
   align-items: center;
