@@ -63,13 +63,13 @@ export function useSupabaseSync() {
         .select('*')
         .order('start_time');
       if (taskRows) {
-        const localTasks   = (taskRows as Record<string,unknown>[])
+        const localTasks = (taskRows as Record<string,unknown>[])
           .filter(r => r.source === 'local')
           .map(rowToTask);
-        const notionTasks  = (taskRows as Record<string,unknown>[])
-          .filter(r => r.source === 'notion')
-          .map(rowToTask);
-        store.setAllTasks([...localTasks, ...notionTasks]);
+        // Notion tasks live in Zustand/localStorage (synced via useNotionSync).
+        // Preserve them so loadAll() doesn't wipe them.
+        const existingNotionTasks = useAppStore.getState().tasks.filter(t => t.source === 'notion');
+        store.setAllTasks([...localTasks, ...existingNotionTasks]);
       }
 
       // fields
