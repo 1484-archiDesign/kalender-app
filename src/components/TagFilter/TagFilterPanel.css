@@ -1,0 +1,112 @@
+.tag-filter {
+  width: 120px;
+  flex-shrink: 0;
+  border-left: var(--border-thick);
+  background: var(--black);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 1;
+}
+
+.tag-filter__header {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--yellow);
+  padding: 12px 12px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.tag-filter__list {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+
+.tag-filter__row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 60ms;
+  border-left: 3px solid transparent;
+}
+.tag-filter__row:hover {
+  background: rgba(255,255,255,0.05);
+}
+.tag-filter__row.active {
+  border-left-color: var(--yellow);
+}
+
+.tag-filter__checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 60ms, background 60ms;
+}
+.tag-filter__checkbox:checked {
+  background: var(--yellow);
+  border-color: var(--yellow);
+}
+.tag-filter__checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 4px;
+  height: 8px;
+  border: 2px solid var(--black);
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.tag-filter__name {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 60ms;
+}
+.tag-filter__row.active .tag-filter__name {
+  color: rgba(255,255,255,0.9);
+}
+
+.tag-filter__dots {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.tag-filter__dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+}
+
+.tag-filter__empty {
+  font-size: 9px;
+  color: rgba(255,255,255,0.25);
+  padding: 12px;
+  letter-spacing: 0.08em;
+}
+
+/* Mobile: hide panel, use settings instead */
+@media (max-width: 640px) {
+  .tag-filter {
+    display: none;
+  }
+}

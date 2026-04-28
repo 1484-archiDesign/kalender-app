@@ -10,6 +10,7 @@ import MonthView from './components/Calendar/MonthView';
 import TaskModal from './components/Task/TaskModal';
 import FieldSettings from './components/Settings/FieldSettings';
 import NotionSettings from './components/Settings/NotionSettings';
+import TagFilterPanel from './components/TagFilter/TagFilterPanel';
 import './App.css';
 
 export default function App() {
@@ -83,6 +84,7 @@ export default function App() {
         ) : (
           <MonthView onCreateTask={handleCreateTask} onEditTask={handleEditTask} />
         )}
+        <TagFilterPanel />
       </main>
 
       {taskModal !== null && (
