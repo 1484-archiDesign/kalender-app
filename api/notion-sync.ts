@@ -91,22 +91,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const startProp = props[fm.startTime];
       const endProp = fm.endTime ? props[fm.endTime] : undefined;
 
-      const startDate = extractDate(startProp ?? {});
+      let startDate = extractDate(startProp ?? {});
       if (!startDate) return null;
 
       let endDate: string | undefined;
       if (endProp) {
         endDate = extractDate(endProp, true);
       } else {
-        // use end of same date prop if available
         endDate = extractDate(startProp ?? {}, true);
       }
 
-      // Default: 1 hour duration if no end
-      if (!endDate) {
-        const s = new Date(startDate);
-        s.setHours(s.getHours() + 1);
-        endDate = s.toISOString();
+      // Date-only (no time component) → default 09:00–10:00 local
+      const isDateOnly = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
+      if (isDateOnly(startDate)) {
+        startDate = startDate + 'T09:00:00';
+      }
+      if (!endDate || isDateOnly(endDate)) {
+        // same day as start, +1 hour
+        const base = isDateOnly(startDate) ? startDate : startDate.slice(0, 10);
+        endDate = base.slice(0, 10) + 'T10:00:00';
       }
 
       return {
